@@ -23,12 +23,6 @@ environ['SPOTIPY_CLIENT_ID'] = '36fea8a4d7a04483a1e4440e9f7eff95'
 environ['SPOTIPY_CLIENT_SECRET'] = '8bbeba13692748ba86958768462f9909'
 
 
-## TODO
-# Parse check, search many artists, see what is making it through
-    # song [live]
-
-    
-
 def get_spotipy():
     auth_manager = SpotifyClientCredentials()
     return Spotify(auth_manager=auth_manager)
