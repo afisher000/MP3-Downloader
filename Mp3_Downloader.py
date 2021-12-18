@@ -9,10 +9,10 @@ Created on Sun Dec  5 11:12:36 2021
 import sys, os
 def override_where():
     """ overrides certifi.core.where to return actual location of cacert.pem"""
-    # change this to match the location of cacert.pem
+    # in this case, I require cacert.pem to be in the same directory
     return 'cacert.pem'
 
-# is the program compiled?
+# If program is compiled, 
 if hasattr(sys, "frozen"):
     import certifi.core
     os.environ["REQUESTS_CA_BUNDLE"] = override_where()
@@ -21,8 +21,6 @@ if hasattr(sys, "frozen"):
     # delay importing until after where() has been replaced
     import requests.utils
     import requests.adapters
-    # replace these variables in case these modules were
-    # imported before we replaced certifi.core.where
     requests.utils.DEFAULT_CA_BUNDLE_PATH = override_where()
     requests.adapters.DEFAULT_CA_BUNDLE_PATH = override_where()
 
@@ -40,20 +38,21 @@ from PIL import ImageTk, Image
 from numpy import log10
 import mutagen
 
-
+# Set spotify API tokens
 os.environ['SPOTIPY_CLIENT_ID'] = '36fea8a4d7a04483a1e4440e9f7eff95'
 os.environ['SPOTIPY_CLIENT_SECRET'] = '8bbeba13692748ba86958768462f9909'
 
 
 def clean_name(track):
-    track = re.sub('(\/|\\|\||\?)[ ]?','',track) # remove bad file chars
-    track = re.sub(' - .*','',track) # remove hyphen additions
-    track = re.sub('\(.*\)','',track).strip() # remove parentheticals
+    ''' Remove bad file chars, hyphen phrases, and parentheticals '''
+    track = re.sub('(\/|\\|\||\?)[ ]?','',track)
+    track = re.sub(' - .*','',track) 
+    track = re.sub('\(.*\)','',track).strip()
     return track
     
     
 def check_album_name(album_name):
-    # Take out albums with parentheticals and hyphens for now
+    ''' Disregard albums with hyphen phrases and parentheticals for now'''
     if re.search('\(.*\)',album_name):
         return False
     if re.search(' - .*',album_name):
@@ -61,6 +60,7 @@ def check_album_name(album_name):
     return True
 
 def get_spotipy():
+    ''' Make connection to Spotify API'''
     auth_manager = SpotifyClientCredentials()
     return Spotify(auth_manager=auth_manager)
     
@@ -96,6 +96,7 @@ class App(Tk):
 
         
     def create_queue_options_frame(self):
+        ''' Create frame with buttons that control the queue'''
         frame = Frame(self)
         frame.grid(row=0,column=2,sticky='news')
         Button(frame,text='Add to queue',bg=self.button_color, font=('TkTextFont',18),command=self.add_songs_to_queue).grid(row=1,column=1,pady=10,padx=10)
@@ -104,10 +105,12 @@ class App(Tk):
         return frame
     
     
-    def onFrameConfigure(self,event):
+    def onAlbumsConfigure(self,event):
+        ''' Adapt scrollbars to match size of dataframe'''
         self.canvas.configure(scrollregion=self.canvas.bbox('all'))
    
     def create_queue_frame(self):
+        ''' Create layout of queue and populate with songs in self.queue'''
         self.queue_canvas = Canvas(self,borderwidth=2,width = 200,bg=self.button_color)
         self.queue_frame = Frame(self.queue_canvas)
         self.queue_vsb = Scrollbar(self,orient='vertical',command=self.queue_canvas.yview)
@@ -124,9 +127,11 @@ class App(Tk):
             self.queue_labels[-1].grid(row=row,column=0,sticky='we')
         
     def onQueueConfigure(self,event):
+        ''' Adapt scrollbars to match size of queueframe'''
         self.queue_canvas.configure(scrollregion=self.queue_canvas.bbox('all'))
         
     def create_data_frame(self):
+        ''' Create layout for display of albums by looping over calls to create_album_Frame'''
         self.canvas = Canvas(self,borderwidth=0,background='#ffffff')
         self.albums_frame = Frame(self.canvas)
         self.data_hsb = Scrollbar(self,orient='horizontal',command=self.canvas.xview)
@@ -137,7 +142,7 @@ class App(Tk):
         self.data_vsb.grid(row=1,column=1, sticky='nse')
         self.canvas.grid(row=1,column=0,columnspan=2,sticky='news',padx=(0,15),pady=(0,15))
         self.canvas.create_window((0,0),window=self.albums_frame,anchor='nw')
-        self.albums_frame.bind('<Configure>',self.onFrameConfigure)
+        self.albums_frame.bind('<Configure>',self.onAlbumsConfigure)
        
         if not self.data:
             return #No data
@@ -153,6 +158,7 @@ class App(Tk):
             
         
     def create_album_frame(self,container):
+        '''Create frame for given album including button with album name and checkboxes for all tracks in the album'''
         frame = Frame(container)
         if self.album_name not in ['Top Tracks','Singles']:
             album_title = f'{self.album_name} ({str(self.data[self.album_name]["year"])})'
@@ -168,6 +174,7 @@ class App(Tk):
         return frame
     
     def select_album_tracks(self,album_name):
+        ''' Selects all checkboxes when album button is pressed'''
         states = list(map(lambda x: x.get(),self.checkboxes[album_name]))
         if False in states:
             new_state = True
@@ -177,10 +184,12 @@ class App(Tk):
             checkbox.set(new_state)
             
     def clear_checkboxes(self):
+        '''Clear all checkboxes for all albums'''
         [checkbox.set(0) for album_name in self.data['albums'] for checkbox in self.checkboxes[album_name]]
         return
 
     def create_search_artist_frame(self):
+        ''' Create layout for artist search bar'''
         frame = Frame(self,bd=2,bg='#333333')
         frame.grid(row=0,column=1,sticky='wns')
         frame.rowconfigure(0,weight=1)
@@ -200,6 +209,7 @@ class App(Tk):
         return frame
     
     def get_artist_info(self,event=None):
+        '''Retrieve artist information from spotify including albums, top tracks, and singles.'''
         search_artist = self.artist_entry.get()
         data = {}
         ## Grab artist and image
@@ -249,6 +259,7 @@ class App(Tk):
         return
 
     def rebuild_data_picture_frames(self,pic_flag):
+        ''' Updates frames to match the new searched artist '''
         try:
             self.data_frame.destroy()
             self.picture_frame.destroy()
@@ -261,6 +272,7 @@ class App(Tk):
         
     
     def create_picture_frame(self):
+        ''' Add cover photo for the searched artist '''
         frame = Frame(self)
         frame.grid(row=0,column=0,sticky='w')
 
@@ -270,15 +282,16 @@ class App(Tk):
             self.img = ImageTk.PhotoImage(Image.open('no artist.jpg').resize((200,200)))
         label = Label(frame,image=self.img,anchor='w')
         label.grid(row=0,column=0)
-
         return frame
 
     def rebuild_queue(self):
+        ''' Update queue to match the values in self.queue'''
         self.queue_canvas.destroy()
         self.create_queue_frame()
         return
 
     def add_songs_to_queue(self):
+        ''' Add all songs with marked checkboxes to the queue. Then clear checkboxes'''
         new_searches = []
         for album_name in self.data['albums']:
             track_names = self.data[album_name]['tracks']
@@ -290,11 +303,13 @@ class App(Tk):
         return
     
     def clear_queue(self):
+        ''' Clear all songs in self.queue and rebuilt the queue'''
         self.queue=[]
         self.rebuild_queue()
         return
     
     def download_queue(self):
+        ''' Download all songs in queue to folder Downloaded Music '''
         for idx,entry in enumerate(self.queue):
             yt = self.best_youtube_result(entry)
             #status = self.download_song(entry,yt)
@@ -309,6 +324,7 @@ class App(Tk):
         self.clear_queue()
         
     def best_youtube_result(self,entry):
+        ''' Return best youtube link as defined by time_socre, rating_score, and views_score '''
         # Consider first 3 results
         yt_results = Search(entry + ' lyrics').results[:3]
         sp_time = self.sp.search(entry,type='track')['tracks']['items'][0]['duration_ms'] / 1000
@@ -324,6 +340,7 @@ class App(Tk):
         return yt_results[idx]  
             
     def download_song(self,search,yt):
+        ''' Download the youtube link. Create a file with correct info tags in Downloaded Music '''
         cur_artist = re.search('^.*(?= -)',search)[0]
         cur_track = re.search('(?<=- ).*',search)[0]
         filename = f'{cur_artist} - {cur_track}.mp4'
@@ -334,7 +351,6 @@ class App(Tk):
         
         # Download Audio file
         try:
-            # Parser bug in pytube
             audio = yt.streams.filter(only_audio=True,mime_type='audio/mp4')[-1]
             if audio.filesize>1e6:
                 audio.download(filename = filename)
@@ -368,6 +384,7 @@ class App(Tk):
         return True
 
     def error_log(self,errormsg):
+        ''' Write message to error_log '''
         with open('error_log.txt','a') as f:
             print(errormsg)
             f.write(f'{errormsg}\n')
