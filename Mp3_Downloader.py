@@ -52,7 +52,7 @@ def clean_name(track):
     
     
 def check_album_name(album_name):
-    ''' Disregard albums with hyphen phrases and parentheticals for now'''
+    ''' Allow all album names '''
     #if re.search('\(.*\)',album_name):
     #    return False
     #if re.search(' - .*',album_name):
