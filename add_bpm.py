@@ -14,9 +14,6 @@ import numpy as np
 import mutagen
 
 directory = 'C:/Users/afish/Music/Music - Python Download/'
-#directory = 'C:/Users/afish/Documents/test/'
-
-
 
 def get_Fourier(data,Fs, fmin=1.5, fmax=3.5):
     ''' 
