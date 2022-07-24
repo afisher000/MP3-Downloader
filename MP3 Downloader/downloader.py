@@ -51,8 +51,6 @@ class Main_Window(mw_Base, mw_Ui):
 
     
         self.download_folder = 'Downloads'
-        self.search_text.setText('dua lipa')
-        self.search_artist()
     
     
     def error_log(self,errormsg):
@@ -104,14 +102,14 @@ class Main_Window(mw_Base, mw_Ui):
         
         # Check if no download options
         if len(yt_data)==0:
-            self.error_log(f'Length of yt_data is zero for {query}')
+            self.error_log(f'No youtube results matching criteria for {query}')
             change_label_color(queue_index, 1)
             return 1
             
         audios = yts[yt_data.index[0]].streams.filter(only_audio=True, 
                                                            mime_type='audio/mp4')
         if len(audios)==0:
-            self.error_log(f'Length of audios is zero for {query}')
+            self.error_log(f'No audio files for {query}')
             change_label_color(queue_index, 1)
             return 1
         
