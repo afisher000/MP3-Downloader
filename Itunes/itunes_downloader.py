@@ -26,7 +26,8 @@ import sounddevice as sd
 import soundfile as sf
 
 # Include singles or top tracks?
-# Include sample of song
+# Remove duplicates in albums (thought already coded)
+
 
 mw_Ui, mw_Base = uic.loadUiType('main_window.ui')
 class Main_Window(mw_Base, mw_Ui):
@@ -276,6 +277,7 @@ class Main_Window(mw_Base, mw_Ui):
             response = requests.get(album.artworkUrl60)
             Image.open(BytesIO(response.content)).save('test.jpg')
             album_img.setPixmap(qtg.QPixmap('test.jpg'))
+            os.remove('test.jpg')
             album_img.setSizePolicy(qtw.QSizePolicy.Minimum, qtw.QSizePolicy.Preferred)
             header.addWidget(album_img)
             
