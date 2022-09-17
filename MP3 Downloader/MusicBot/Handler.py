@@ -129,7 +129,7 @@ class Handler():
         # Download songs
         regex = re.compile('(.*) - (.*) \((.*) ms\)')
         for song in songs:
-            track = dict(zip(['song','artist','time_ms'], regex.search(song).groups()))
+            track = dict(zip(['artist','song','time_ms'], regex.search(song).groups()))
             error = self.download_song(track)
             say(token=self.SLACK_BOT_USER_TOKEN,
                 text=f'{song}: ' + error['message'])
