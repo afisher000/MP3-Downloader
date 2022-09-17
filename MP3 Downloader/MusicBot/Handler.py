@@ -17,10 +17,12 @@ import mutagen
 import subprocess
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-
-
 import pickle
-pickle.load(open('body.pkl','rb'))
+
+
+# TO IMPLEMENT
+
+    # Clean song name
 
 
 class Handler():
@@ -40,6 +42,9 @@ class Handler():
         credentials = SpotifyClientCredentials(client_id=CLIENT_ID,
                                                client_secret=CLIENT_SECRET)
         self.sp = spotipy.Spotify(client_credentials_manager=credentials)
+        self.possible_commands = '''Possible commands:
+            @MusicBot topten(artist_query)
+            @MusicBot song(song_query)'''
         
     def parse_call(self, text, say):
         regex = re.compile('(<[^>]*>)([\w\s]*)\(([^\)]*)\)')
@@ -54,13 +59,27 @@ class Handler():
         
         return keyword, item
     
+    def clean_name(self, name):
+        name = re.sub('\(.*\)','',name)
+        name = re.sub('(\/|\\|\||\?)[ ]?','',name)
+        name = re.sub(' - .*','',name).strip()
+        return name
+    
     def new_song(self, channel, search):
         # Get songs from Itunes API
         limit = 5
         url = self.song_url.format(search, limit)
-        song_results = [f"{r['artistName']} - {r['trackName']} ({r['trackTimeMillis']} ms)"
+        song_results = [f"{r['artistName']} - {self.clean_name(r['trackName'])} ({r['trackTimeMillis']} ms)"
                         for r in requests.get(url).json()['results']]
         song_results = list(OrderedDict.fromkeys(song_results))
+        
+        if len(song_results)==0:
+            self.app.client.chat_postMessage(
+                token=self.SLACK_BOT_USER_TOKEN,
+                channel=channel,
+                text = 'No results found'
+            )
+            return
         
         # Build blocks
         blocks = [
@@ -82,7 +101,7 @@ class Handler():
         artist = self.sp.search(search, limit=1, type='artist')['artists']['items'][0]
         ['uri']
         topten = self.sp.artist_top_tracks(artist_id = artist['uri'])
-        song_results = [f"{artist['name']} - {track['name']} ({track['duration_ms']} ms)"
+        song_results = [f"{artist['name']} - {self.clean_name(track['name'])} ({track['duration_ms']} ms)"
                         for track in topten['tracks']]
 
         # Build blocks
@@ -102,7 +121,6 @@ class Handler():
         
     def handle_song_download(self, ack, body, logger, say):
         ack()
-        pickle.dump(body, open('body.pkl','wb'))
 
         # Grab selected songs
         selected_options = body['state']['values']['checkbox_id']['checkboxes-action']['selected_options']
@@ -141,7 +159,13 @@ class Handler():
             self.new_song(event['channel'], item)
         elif keyword=='topten':
             self.top_ten(event['channel'], item)
-        
+        elif keyword=='help':
+            say(token = self.SLACK_BOT_USER_TOKEN,
+                text=self.possible_commands)
+        else:
+            say(token = self.SLACK_BOT_USER_TOKEN,
+                text='Function not recognized.\n'+self.possible_commands)
+            
     def download_song(self, track):
         '''Track_data needs to have song name, artist name, track length'''
         error = {'state':False, 'message':''}
