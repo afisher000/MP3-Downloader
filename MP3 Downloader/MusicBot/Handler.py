@@ -22,9 +22,6 @@ import pickle
 
 # TO IMPLEMENT
 
-    # Clean song name
-
-
 class Handler():
     def __init__(self, app, SLACK_BOT_TOKEN, SLACK_BOT_USER_TOKEN):
         self.app = app
@@ -43,18 +40,16 @@ class Handler():
                                                client_secret=CLIENT_SECRET)
         self.sp = spotipy.Spotify(client_credentials_manager=credentials)
         self.possible_commands = '''Possible commands:
-            @MusicBot topten(artist_query)
-            @MusicBot song(song_query)'''
+            topten(artist_query)
+            song(song_query)'''
         
     def parse_call(self, text, say):
-        regex = re.compile('(<[^>]*>)([\w\s]*)\(([^\)]*)\)')
+        regex = re.compile('^([\w\s]*)\(([^\)]*)\)$')
         try:
             groups = regex.search(text).groups()
-            mention, keyword, item = [group.strip() for group in groups]
+            keyword, item = [group.strip().lower() for group in groups]
         except:
-            say(token=self.SLACK_BOT_USER_TOKEN, 
-                text='''Cannot parse input''')
-            keyword = 'help'
+            keyword = None
             item = None
         
         return keyword, item
@@ -147,11 +142,21 @@ class Handler():
                                    blocks=None)
         return
         
-    def handle_message_events(self, body, logger):
-        logger.info(body)
         
-    def handle_app_mention_events(self, event, say, ack):
+    def handle_message_events(self, event, say, ack):
         ack()
+        
+        # Musicbot only for Andrew
+        if event['user']!='U041KR1G9TJ':
+            return
+        
+        if 'text' not in event.keys():
+            return
+        
+        if event['channel'][0] != 'D':
+            print('Not a direct message')
+            return
+        
         keyword, item = self.parse_call(event['text'], say)
         
         # new game
@@ -162,9 +167,6 @@ class Handler():
         elif keyword=='help':
             say(token = self.SLACK_BOT_USER_TOKEN,
                 text=self.possible_commands)
-        else:
-            say(token = self.SLACK_BOT_USER_TOKEN,
-                text='Function not recognized.\n'+self.possible_commands)
             
     def download_song(self, track):
         '''Track_data needs to have song name, artist name, track length'''

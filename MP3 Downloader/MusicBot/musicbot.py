@@ -20,12 +20,8 @@ HANDLER = Handler(app, SLACK_BOT_TOKEN, SLACK_BOT_USER_TOKEN)
 
 # Connect event decorators with functions calling class functions.
 @app.event("message")
-def handle_message_events(body, logger):
-    HANDLER.handle_message_events(body, logger)
-
-@app.event("app_mention")
-def handle_app_mention_events(event, say, ack):
-    HANDLER.handle_app_mention_events(event, say, ack)
+def handle_message_events(event, say, ack):
+    HANDLER.handle_message_events(event, say, ack)
     
     
 @app.action("download_song")
