@@ -22,9 +22,6 @@ import pickle
 
 # TO IMPLEMENT
 
-    # Clean song name
-
-
 class Handler():
     def __init__(self, app, SLACK_BOT_TOKEN, SLACK_BOT_USER_TOKEN):
         self.app = app
@@ -145,9 +142,21 @@ class Handler():
                                    blocks=None)
         return
         
-
+        
     def handle_message_events(self, event, say, ack):
         ack()
+        
+        # Musicbot only for Andrew
+        if event['user']!='U041KR1G9TJ':
+            return
+        
+        if 'text' not in event.keys():
+            return
+        
+        if event['channel'][0] != 'D':
+            print('Not a direct message')
+            return
+        
         keyword, item = self.parse_call(event['text'], say)
         
         # new game
@@ -158,7 +167,6 @@ class Handler():
         elif keyword=='help':
             say(token = self.SLACK_BOT_USER_TOKEN,
                 text=self.possible_commands)
-
             
     def download_song(self, track):
         '''Track_data needs to have song name, artist name, track length'''
