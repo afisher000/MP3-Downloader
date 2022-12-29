@@ -145,7 +145,6 @@ class Handler():
         
     def handle_message_events(self, event, say, ack):
         ack()
-        
         # Musicbot only for Andrew
         if event['user']!='U041KR1G9TJ':
             return
@@ -171,6 +170,7 @@ class Handler():
     def download_song(self, track):
         '''Track_data needs to have song name, artist name, track length'''
         error = {'state':False, 'message':''}
+        track["artist"] = track["artist"].replace('"','')
         
         # Check if file already exists
         filename = f'{track["artist"]} - {track["song"]}.mp4'
@@ -248,7 +248,7 @@ class Handler():
             #file.add_tags()
             file['\xa9nam']=track["song"]
             file['\xa9alb']='Main' #default album
-            file['\xa9ART']=track["artist"]
+            file['\xa9ART']=track["artist"].replace('"','')
             file.save()
             print('finished changing tags')
         except Exception as e:
